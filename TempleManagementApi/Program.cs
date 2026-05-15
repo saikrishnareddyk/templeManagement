@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using TempleManagementApi.Data;
 using TempleManagementApi.Mappings;
+using TempleManagementApi.Interfaces;
+using TempleManagementApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +19,9 @@ builder.Services.AddDbContext<TempleDbContext>(options =>
 
 // Register AutoMapper
 builder.Services.AddAutoMapper(cfg => { }, typeof(TempleMappingProfile));
+
+// Register Services
+builder.Services.AddScoped<IDevoteeService, DevoteeService>();
 
 var app = builder.Build();
 
