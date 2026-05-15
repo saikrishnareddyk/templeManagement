@@ -5,11 +5,11 @@ namespace TempleManagementApi.DTOs;
 public class UpdateDevoteeDto
 {
     [Required(ErrorMessage = "Full name is required")]
-    [StringLength(100, ErrorMessage = "Full name cannot exceed 100 characters")]
+    [StringLength(100, MinimumLength = 3, ErrorMessage = "Full name must be between 3 and 100 characters")]
     public string FullName { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Mobile number is required")]
-    [StringLength(15, ErrorMessage = "Mobile number cannot exceed 15 characters")]
+    [RegularExpression(@"^[6-9]\d{9}$", ErrorMessage = "Mobile number must be a valid 10 digit Indian mobile number")]
     public string MobileNumber { get; set; } = string.Empty;
 
     [EmailAddress(ErrorMessage = "Invalid email address")]

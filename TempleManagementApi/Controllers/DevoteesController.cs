@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TempleManagementApi.DTOs;
 using TempleManagementApi.Interfaces;
+using TempleManagementApi.Responses;
 
 namespace TempleManagementApi.Controllers;
 
@@ -16,40 +17,52 @@ public class DevoteesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<DevoteeDto>>> GetAllDevotees()
+    public async Task<ActionResult<ApiResponse<List<DevoteeDto>>>> GetAllDevotees()
     {
         var devotees = await _devoteeService.GetAllDevoteesAsync();
 
-        return Ok(devotees);
+        return Ok(ApiResponse<List<DevoteeDto>>.SuccessResponse(
+            devotees,
+            "Devotees fetched successfully"
+        ));
     }
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<DevoteeDto>> GetDevoteeById(int id)
+    public async Task<ActionResult<ApiResponse<DevoteeDto>>> GetDevoteeById(int id)
     {
         var devotee = await _devoteeService.GetDevoteeByIdAsync(id);
 
         if (devotee == null)
         {
-            return NotFound($"Devotee with Id {id} was not found.");
+            return NotFound(ApiResponse<DevoteeDto>.FailureResponse(
+                "Devotee not found",
+                new List<string> { $"Devotee with Id {id} was not found" }
+            ));
         }
 
-        return Ok(devotee);
+        return Ok(ApiResponse<DevoteeDto>.SuccessResponse(
+            devotee,
+            "Devotee fetched successfully"
+        ));
     }
 
     [HttpPost]
-    public async Task<ActionResult<DevoteeDto>> CreateDevotee(CreateDevoteeDto createDevoteeDto)
+    public async Task<ActionResult<ApiResponse<DevoteeDto>>> CreateDevotee(CreateDevoteeDto createDevoteeDto)
     {
         var createdDevotee = await _devoteeService.CreateDevoteeAsync(createDevoteeDto);
 
         return CreatedAtAction(
             nameof(GetDevoteeById),
             new { id = createdDevotee.Id },
-            createdDevotee
+            ApiResponse<DevoteeDto>.SuccessResponse(
+                createdDevotee,
+                "Devotee created successfully"
+            )
         );
     }
 
     [HttpPut("{id:int}")]
-    public async Task<ActionResult<DevoteeDto>> UpdateDevotee(
+    public async Task<ActionResult<ApiResponse<DevoteeDto>>> UpdateDevotee(
         int id,
         UpdateDevoteeDto updateDevoteeDto)
     {
@@ -57,10 +70,16 @@ public class DevoteesController : ControllerBase
 
         if (updatedDevotee == null)
         {
-            return NotFound($"Devotee with Id {id} was not found.");
+            return NotFound(ApiResponse<DevoteeDto>.FailureResponse(
+                "Devotee not found",
+                new List<string> { $"Devotee with Id {id} was not found" }
+            ));
         }
 
-        return Ok(updatedDevotee);
+        return Ok(ApiResponse<DevoteeDto>.SuccessResponse(
+            updatedDevotee,
+            "Devotee updated successfully"
+        ));
     }
 
     [HttpDelete("{id:int}")]
@@ -70,9 +89,15 @@ public class DevoteesController : ControllerBase
 
         if (!isDeleted)
         {
-            return NotFound($"Devotee with Id {id} was not found.");
+            return NotFound(ApiResponse<object>.FailureResponse(
+                "Devotee not found",
+                new List<string> { $"Devotee with Id {id} was not found" }
+            ));
         }
 
-        return NoContent();
+        return Ok(ApiResponse<object>.SuccessResponse(
+            null,
+            "Devotee deleted successfully"
+        ));
     }
 }

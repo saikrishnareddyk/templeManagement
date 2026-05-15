@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TempleManagementApi.DTOs;
 using TempleManagementApi.Interfaces;
+using TempleManagementApi.Responses;
 
 namespace TempleManagementApi.Controllers;
 
@@ -16,40 +17,52 @@ public class SevasController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<SevaDto>>> GetAllSevas()
+    public async Task<ActionResult<ApiResponse<List<SevaDto>>>> GetAllSevas()
     {
         var sevas = await _sevaService.GetAllSevasAsync();
 
-        return Ok(sevas);
+        return Ok(ApiResponse<List<SevaDto>>.SuccessResponse(
+            sevas,
+            "Sevas fetched successfully"
+        ));
     }
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<SevaDto>> GetSevaById(int id)
+    public async Task<ActionResult<ApiResponse<SevaDto>>> GetSevaById(int id)
     {
         var seva = await _sevaService.GetSevaByIdAsync(id);
 
         if (seva == null)
         {
-            return NotFound($"Seva with Id {id} was not found.");
+            return NotFound(ApiResponse<SevaDto>.FailureResponse(
+                "Seva not found",
+                new List<string> { $"Seva with Id {id} was not found" }
+            ));
         }
 
-        return Ok(seva);
+        return Ok(ApiResponse<SevaDto>.SuccessResponse(
+            seva,
+            "Seva fetched successfully"
+        ));
     }
 
     [HttpPost]
-    public async Task<ActionResult<SevaDto>> CreateSeva(CreateSevaDto createSevaDto)
+    public async Task<ActionResult<ApiResponse<SevaDto>>> CreateSeva(CreateSevaDto createSevaDto)
     {
         var createdSeva = await _sevaService.CreateSevaAsync(createSevaDto);
 
         return CreatedAtAction(
             nameof(GetSevaById),
             new { id = createdSeva.Id },
-            createdSeva
+            ApiResponse<SevaDto>.SuccessResponse(
+                createdSeva,
+                "Seva created successfully"
+            )
         );
     }
 
     [HttpPut("{id:int}")]
-    public async Task<ActionResult<SevaDto>> UpdateSeva(
+    public async Task<ActionResult<ApiResponse<SevaDto>>> UpdateSeva(
         int id,
         UpdateSevaDto updateSevaDto)
     {
@@ -57,10 +70,16 @@ public class SevasController : ControllerBase
 
         if (updatedSeva == null)
         {
-            return NotFound($"Seva with Id {id} was not found.");
+            return NotFound(ApiResponse<SevaDto>.FailureResponse(
+                "Seva not found",
+                new List<string> { $"Seva with Id {id} was not found" }
+            ));
         }
 
-        return Ok(updatedSeva);
+        return Ok(ApiResponse<SevaDto>.SuccessResponse(
+            updatedSeva,
+            "Seva updated successfully"
+        ));
     }
 
     [HttpDelete("{id:int}")]
@@ -70,9 +89,18 @@ public class SevasController : ControllerBase
 
         if (!isDeleted)
         {
-            return BadRequest($"Seva with Id {id} was not found or it already has booking records.");
+            return BadRequest(ApiResponse<object>.FailureResponse(
+                "Seva cannot be deleted",
+                new List<string>
+                {
+                    $"Seva with Id {id} was not found or it already has booking records"
+                }
+            ));
         }
 
-        return NoContent();
+        return Ok(ApiResponse<object>.SuccessResponse(
+            null,
+            "Seva deleted successfully"
+        ));
     }
 }
