@@ -22,8 +22,8 @@ builder.Services.AddAutoMapper(cfg => { }, typeof(TempleMappingProfile));
 
 // Register Services
 builder.Services.AddScoped<IDevoteeService, DevoteeService>();
-
 builder.Services.AddScoped<ISevaService, SevaService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
 
 var app = builder.Build();
 
