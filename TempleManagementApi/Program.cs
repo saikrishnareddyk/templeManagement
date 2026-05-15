@@ -23,6 +23,8 @@ builder.Services.AddAutoMapper(cfg => { }, typeof(TempleMappingProfile));
 // Register Services
 builder.Services.AddScoped<IDevoteeService, DevoteeService>();
 
+builder.Services.AddScoped<ISevaService, SevaService>();
+
 var app = builder.Build();
 
 // Configure HTTP request pipeline
