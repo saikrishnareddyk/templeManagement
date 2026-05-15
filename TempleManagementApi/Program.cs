@@ -16,7 +16,7 @@ builder.Services.AddDbContext<TempleDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Register AutoMapper
-builder.Services.AddAutoMapper(typeof(TempleMappingProfile));
+builder.Services.AddAutoMapper(cfg => { }, typeof(TempleMappingProfile));
 
 var app = builder.Build();
 
