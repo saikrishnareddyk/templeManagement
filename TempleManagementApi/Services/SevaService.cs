@@ -1,36 +1,32 @@
 ﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
-using TempleManagementApi.Data;
 using TempleManagementApi.DTOs;
 using TempleManagementApi.Interfaces;
 using TempleManagementApi.Models;
+using TempleManagementApi.Repositories;
 
 namespace TempleManagementApi.Services;
 
 public class SevaService : ISevaService
 {
-    private readonly TempleDbContext _context;
+    private readonly ISevaRepository _sevaRepository;
     private readonly IMapper _mapper;
 
-    public SevaService(TempleDbContext context, IMapper mapper)
+    public SevaService(ISevaRepository sevaRepository, IMapper mapper)
     {
-        _context = context;
+        _sevaRepository = sevaRepository;
         _mapper = mapper;
     }
 
     public async Task<List<SevaDto>> GetAllSevasAsync()
     {
-        var sevas = await _context.Sevas
-            .OrderByDescending(s => s.CreatedDate)
-            .ToListAsync();
+        var sevas = await _sevaRepository.GetAllAsync();
 
         return _mapper.Map<List<SevaDto>>(sevas);
     }
 
     public async Task<SevaDto?> GetSevaByIdAsync(int id)
     {
-        var seva = await _context.Sevas
-            .FirstOrDefaultAsync(s => s.Id == id);
+        var seva = await _sevaRepository.GetByIdAsync(id);
 
         if (seva == null)
         {
@@ -46,17 +42,16 @@ public class SevaService : ISevaService
 
         seva.CreatedDate = DateTime.UtcNow;
 
-        await _context.Sevas.AddAsync(seva);
+        await _sevaRepository.AddAsync(seva);
 
-        await _context.SaveChangesAsync();
+        await _sevaRepository.SaveChangesAsync();
 
         return _mapper.Map<SevaDto>(seva);
     }
 
     public async Task<SevaDto?> UpdateSevaAsync(int id, UpdateSevaDto updateSevaDto)
     {
-        var seva = await _context.Sevas
-            .FirstOrDefaultAsync(s => s.Id == id);
+        var seva = await _sevaRepository.GetByIdAsync(id);
 
         if (seva == null)
         {
@@ -67,32 +62,30 @@ public class SevaService : ISevaService
 
         seva.UpdatedDate = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        await _sevaRepository.SaveChangesAsync();
 
         return _mapper.Map<SevaDto>(seva);
     }
 
     public async Task<bool> DeleteSevaAsync(int id)
     {
-        var seva = await _context.Sevas
-            .FirstOrDefaultAsync(s => s.Id == id);
+        var seva = await _sevaRepository.GetByIdAsync(id);
 
         if (seva == null)
         {
             return false;
         }
 
-        var hasBookings = await _context.Bookings
-            .AnyAsync(b => b.SevaId == id);
+        var hasBookings = await _sevaRepository.HasBookingsAsync(id);
 
         if (hasBookings)
         {
             return false;
         }
 
-        _context.Sevas.Remove(seva);
+        _sevaRepository.Delete(seva);
 
-        await _context.SaveChangesAsync();
+        await _sevaRepository.SaveChangesAsync();
 
         return true;
     }

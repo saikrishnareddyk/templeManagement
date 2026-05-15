@@ -1,41 +1,33 @@
 ﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
-using TempleManagementApi.Data;
 using TempleManagementApi.DTOs;
 using TempleManagementApi.Helpers;
 using TempleManagementApi.Interfaces;
 using TempleManagementApi.Models;
+using TempleManagementApi.Repositories;
 
 namespace TempleManagementApi.Services;
 
 public class BookingService : IBookingService
 {
-    private readonly TempleDbContext _context;
+    private readonly IBookingRepository _bookingRepository;
     private readonly IMapper _mapper;
 
-    public BookingService(TempleDbContext context, IMapper mapper)
+    public BookingService(IBookingRepository bookingRepository, IMapper mapper)
     {
-        _context = context;
+        _bookingRepository = bookingRepository;
         _mapper = mapper;
     }
 
     public async Task<List<BookingDto>> GetAllBookingsAsync()
     {
-        var bookings = await _context.Bookings
-            .Include(b => b.Devotee)
-            .Include(b => b.Seva)
-            .OrderByDescending(b => b.CreatedDate)
-            .ToListAsync();
+        var bookings = await _bookingRepository.GetAllWithDetailsAsync();
 
         return _mapper.Map<List<BookingDto>>(bookings);
     }
 
     public async Task<BookingDto?> GetBookingByIdAsync(int id)
     {
-        var booking = await _context.Bookings
-            .Include(b => b.Devotee)
-            .Include(b => b.Seva)
-            .FirstOrDefaultAsync(b => b.Id == id);
+        var booking = await _bookingRepository.GetByIdWithDetailsAsync(id);
 
         if (booking == null)
         {
@@ -47,16 +39,14 @@ public class BookingService : IBookingService
 
     public async Task<BookingDto?> CreateBookingAsync(CreateBookingDto createBookingDto)
     {
-        var devoteeExists = await _context.Devotees
-            .AnyAsync(d => d.Id == createBookingDto.DevoteeId);
+        var devoteeExists = await _bookingRepository.DevoteeExistsAsync(createBookingDto.DevoteeId);
 
         if (!devoteeExists)
         {
             return null;
         }
 
-        var sevaExists = await _context.Sevas
-            .AnyAsync(s => s.Id == createBookingDto.SevaId);
+        var sevaExists = await _bookingRepository.SevaExistsAsync(createBookingDto.SevaId);
 
         if (!sevaExists)
         {
@@ -68,14 +58,11 @@ public class BookingService : IBookingService
         booking.Status = BookingStatusHelper.Pending;
         booking.CreatedDate = DateTime.UtcNow;
 
-        await _context.Bookings.AddAsync(booking);
+        await _bookingRepository.AddAsync(booking);
 
-        await _context.SaveChangesAsync();
+        await _bookingRepository.SaveChangesAsync();
 
-        var createdBooking = await _context.Bookings
-            .Include(b => b.Devotee)
-            .Include(b => b.Seva)
-            .FirstOrDefaultAsync(b => b.Id == booking.Id);
+        var createdBooking = await _bookingRepository.GetByIdWithDetailsAsync(booking.Id);
 
         return _mapper.Map<BookingDto>(createdBooking);
     }
@@ -84,10 +71,7 @@ public class BookingService : IBookingService
         int id,
         UpdateBookingStatusDto updateBookingStatusDto)
     {
-        var booking = await _context.Bookings
-            .Include(b => b.Devotee)
-            .Include(b => b.Seva)
-            .FirstOrDefaultAsync(b => b.Id == id);
+        var booking = await _bookingRepository.GetByIdWithDetailsAsync(id);
 
         if (booking == null)
         {
@@ -102,24 +86,23 @@ public class BookingService : IBookingService
         booking.Status = BookingStatusHelper.NormalizeStatus(updateBookingStatusDto.Status);
         booking.UpdatedDate = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        await _bookingRepository.SaveChangesAsync();
 
         return _mapper.Map<BookingDto>(booking);
     }
 
     public async Task<bool> DeleteBookingAsync(int id)
     {
-        var booking = await _context.Bookings
-            .FirstOrDefaultAsync(b => b.Id == id);
+        var booking = await _bookingRepository.GetByIdAsync(id);
 
         if (booking == null)
         {
             return false;
         }
 
-        _context.Bookings.Remove(booking);
+        _bookingRepository.Delete(booking);
 
-        await _context.SaveChangesAsync();
+        await _bookingRepository.SaveChangesAsync();
 
         return true;
     }
