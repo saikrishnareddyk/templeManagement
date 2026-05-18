@@ -1,6 +1,0 @@
-@TempleManagementApi_HostAddress = http://localhost:5063
-
-GET {{TempleManagementApi_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
